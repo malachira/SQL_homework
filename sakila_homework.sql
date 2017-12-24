@@ -228,3 +228,59 @@ INNER JOIN country ON T2.country_id = country.country_id;
 --7h. List the top five genres in gross revenue in descending order. 
 --(**Hint**: you may need to use the following tables: category, film_category,
 --inventory, payment, and rental.)
+SELECT category.name, T3.revenue
+FROM 
+	(
+	SELECT film_category.category_id, SUM(T2.amt) as revenue
+	FROM 
+		(
+		SELECT inventory.film_id, T1.amt
+		FROM 
+			(
+			SELECT rental.inventory_id, SUM(payment.amount) AS amt
+			FROM payment
+			INNER JOIN rental ON rental.rental_id = payment.rental_id
+			GROUP BY payment.rental_id
+			) AS T1
+		INNER JOIN inventory ON inventory.inventory_id = T1.inventory_id
+		) AS T2
+	INNER JOIN film_category ON film_category.film_id = T2.film_id
+	GROUP BY film_category.category_id
+	) AS T3
+INNER JOIN category ON category.category_id = T3.category_id
+ORDER BY T3.revenue DESC
+LIMIT 5;
+
+--8a. In your new role as an executive, you would like to have an easy way of viewing the Top five genres by gross revenue. 
+--Use the solution from the problem above to create a view. 
+CREATE VIEW Top_5_genre AS
+(
+	SELECT category.name, T3.revenue
+	FROM 
+		(
+		SELECT film_category.category_id, SUM(T2.amt) as revenue
+		FROM 
+			(
+			SELECT inventory.film_id, T1.amt
+			FROM 
+				(
+				SELECT rental.inventory_id, SUM(payment.amount) AS amt
+				FROM payment
+				INNER JOIN rental ON rental.rental_id = payment.rental_id
+				GROUP BY payment.rental_id
+				) AS T1
+			INNER JOIN inventory ON inventory.inventory_id = T1.inventory_id
+			) AS T2
+		INNER JOIN film_category ON film_category.film_id = T2.film_id
+		GROUP BY film_category.category_id
+		) AS T3
+	INNER JOIN category ON category.category_id = T3.category_id
+	ORDER BY T3.revenue DESC
+	LIMIT 5
+);
+
+--8b. How would you display the view that you created in 8a?
+SELECT * FROM Top_5_genre;
+
+--8c. You find that you no longer need the view `top_five_genres`. Write a query to delete it.
+DROP VIEW Top_5_genre;
